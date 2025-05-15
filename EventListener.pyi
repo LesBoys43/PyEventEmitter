@@ -1,0 +1,32 @@
+from typing import List, Any, Callable
+from Event import Event
+
+class EventListener:
+    """
+    事件监听器类，封装事件处理逻辑
+
+    属性:
+        event (str): 要监听的事件名称
+        listener (Callable): 事件触发时的回调函数
+    """
+    event: str
+    listener: Callable
+
+    def __init__(self, event: str, listener: Callable) -> None:
+        """
+        初始化事件监听器
+
+        Args:
+            event: 要监听的事件名称标识
+            listener: 事件匹配时执行的回调函数，接收参数列表
+        """
+        ...
+
+    def __call__(self, event: Event) -> None:
+        """
+        执行事件监听逻辑（使实例可被直接调用）
+        
+        Args:
+            event: 接收到的事件对象，包含事件名称和参数
+        """
+        ...

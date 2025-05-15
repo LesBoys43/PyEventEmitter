@@ -1,0 +1,18 @@
+# 缓存相关开始
+__pycache__
+examples/__pycache__
+dist_cache
+.git
+*.bak
+# 缓存相关结束
+# IDE相关开始
+.vscode
+.trae
+.netbeans
+.editorconfig
+.idea
+# IDE相关结束
+# 内部文件开始
+maintenance
+build.bat
+# 内部文件结束
