@@ -12,8 +12,12 @@ class EventEmitter:
     """
     listeners: List[EventListener]
     
-    def __init__(self) -> None:
-        """初始化事件发射器，创建空监听器列表"""
+    def __init__(self, cfg: Dict[Any]):
+        """初始化事件发射器，创建空监听器列表
+        
+        Args:
+            cfg: 配置选项
+        """
         ...
     
     def on(self, action: str, cb: Callable) -> None:
