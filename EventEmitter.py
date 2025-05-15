@@ -9,8 +9,13 @@ class EventEmitter:
     属性:
         listeners (List[EventListener]): 存储所有事件监听器的列表。
     """
-    def __init__(self):
-        """初始化事件发射器，创建空监听器列表"""
+    def __init__(self, cfg: Dict[Any]):
+        """初始化事件发射器，创建空监听器列表
+        
+        Args:
+            cfg: 配置选项
+        """
+        self.cfg = cfg
         self.listeners: List[EventListener] = []
     
     def on(self, action: str, cb: Callable) -> None:
