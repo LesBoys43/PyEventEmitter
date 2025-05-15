@@ -63,7 +63,8 @@ class EventEmitter:
         Returns:
             EventEmitter: 返回实例本身以支持链式调用
         """
-        self.on(other["act"], other["cb"])
+        if other is not None and isinstance(other["act"], str) and callable(other["cb"]):
+            self.on(other["act"], other["cb"])
         return self
     
     def __isub__(self, other: str) -> "EventEmitter":
