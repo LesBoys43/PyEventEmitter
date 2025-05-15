@@ -12,7 +12,7 @@ class EventEmitter:
     """
     listeners: List[EventListener]
     
-    def __init__(self, cfg: Dict[Any] = {}):
+    def __init__(self, cfg: Dict[Any, Any] = {}):
         """初始化事件发射器，创建空监听器列表
         
         Args:
