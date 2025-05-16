@@ -36,7 +36,8 @@ class EventListener:
         if self.once:
             if self.trigged:
                 return None
-            self.trigged = True
+            if self.event == action:
+                self.trigged = True
             
         args: List[Any] = event.args
         action: str = event.action
