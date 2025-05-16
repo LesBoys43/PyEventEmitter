@@ -26,7 +26,7 @@ class EventEmitter:
         
         Args:
             action: 要监听的事件名称
-            cb: 事件触发时的回调函数，需接受一个Event参数
+            cb: 事件触发时的回调函数，需接受一个List[Any]参数
         """
         self.listeners.append(EventListener(action, cb))
     
