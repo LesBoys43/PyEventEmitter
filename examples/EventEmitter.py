@@ -41,6 +41,16 @@ class EventEmitter:
             if listener.event == action:
                 self.listeners.remove(listener)
     
+    def once(self, action: str, cb: Callable) -> None:
+        """
+        注册事件监听器 但只会被触发一次
+        
+        Args:
+            action: 要监听的事件名称
+            cb: 事件触发时的回调函数，需接受一个List[Any]参数
+        """
+        self.listeners.append(EventListener(action, cb, True))
+    
     def emit(self, action: str, args: List[Any]) -> Any:
         """
         触发指定事件

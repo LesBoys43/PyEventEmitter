@@ -9,16 +9,19 @@ class EventListener:
         event (str): 要监听的事件名称
         listener (Callable): 事件触发时的回调函数
     """
-    def __init__(self, event: str, listener: Callable) -> None:
+    def __init__(self, event: str, listener: Callable, once: bool = False) -> None:
         """
         初始化事件监听器
 
         Args:
             event: 要监听的事件名称标识
             listener: 事件匹配时执行的回调函数，接收参数列表
+            once: 是否只允许触发一次
         """
         self.event = event
         self.listener = listener
+        self.once = once
+        self.trigged = False
 
     def __call__(self, event: Event) -> any:
         """
@@ -30,6 +33,11 @@ class EventListener:
         Returns:
             any: Listener的返回值（如果适用的话）
         """
+        if self.once:
+            if self.trigged:
+                return None
+            self.trigged = True
+            
         args: List[Any] = event.args
         action: str = event.action
         # 事件名称匹配时才执行回调
