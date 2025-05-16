@@ -22,7 +22,7 @@ class EventListener:
         """
         ...
 
-    def __call__(self, event: Event) -> any:
+    def __call__(self, event: Event) -> Any:
         """
         执行事件监听逻辑（使实例可被直接调用）
         
