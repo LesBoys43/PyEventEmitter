@@ -41,7 +41,7 @@ class EventEmitter:
             if listener.event == action:
                 self.listeners.remove(listener)
     
-    def emit(self, action: str, args: List[Any]) -> any:
+    def emit(self, action: str, args: List[Any]) -> Any:
         """
         触发指定事件
         
