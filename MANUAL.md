@@ -28,14 +28,72 @@ from EventEmitter import EventEmitter
 
 ---
 
+## 配置选项
+
+`EventEmitter` 支持通过构造函数传入配置字典，用于定制事件触发行为。目前支持的配置项如下：
+
+### `backwardTransfer` (bool)
+- **功能**：控制 `emit` 方法的返回值类型。
+- **默认值**：`False`
+- **行为**：
+  - `False`（默认）：`emit` 返回布尔值，表示是否存在对应的监听器。
+  - `True`：`emit` 返回最后一个注册的监听器的返回值。若没有监听器，返回 `None`。
+
+示例：
+
+```python
+# 默认配置（返回布尔值）
+emitter_default = EventEmitter()
+
+# 启用返回值传递
+emitter_custom = EventEmitter({"backwardTransfer": True})
+```
+
+---
+
 ## 基本用法
 
 ### 初始化
 
-创建一个 `EventEmitter` 实例：
+创建 `EventEmitter` 实例时可传入配置字典：
 
 ```python
+# 默认配置（backwardTransfer=False）
 emitter = EventEmitter()
+
+# 自定义配置（启用返回值传递）
+emitter = EventEmitter({"backwardTransfer": True})
+```
+
+---
+
+### 触发事件
+
+#### 方法 `emit(action: str, args: List[Any]) -> any`
+- **功能**：触发指定事件（`action`），并传递参数 `args` 给监听器。
+- **参数**：
+  - `action`：事件名称（字符串）。
+  - `args`：传递给回调函数的参数列表。
+- **返回值**：
+  - 若 `backwardTransfer=False`（默认）：
+    - `True`：存在至少一个监听器。
+    - `False`：无监听器。
+  - 若 `backwardTransfer=True`：
+    - 返回最后一个注册的监听器的返回值。若没有监听器，返回 `None`。
+
+示例：
+
+```python
+# 默认行为（返回布尔值）
+emitter = EventEmitter()
+emitter.on("log", lambda args: print("日志记录"))
+print(emitter.emit("log", []))  # 输出：True
+
+# 启用返回值传递
+emitter_bw = EventEmitter({"backwardTransfer": True})
+emitter_bw.on("calc", lambda args: args[0] + args[1])
+result = emitter_bw.emit("calc", [3, 5])
+print(result)  # 输出：8
 ```
 
 ---
@@ -74,25 +132,6 @@ emitter.deon("data")  # 移除所有 "data" 事件的监听器
 
 ---
 
-### 触发事件
-
-#### 方法 `emit(action: str, args: List[Any]) -> bool`
-- **功能**：触发指定事件（`action`），并传递参数 `args` 给监听器。
-- **参数**：
-  - `action`：事件名称（字符串）。
-  - `args`：传递给回调函数的参数列表。
-- **返回值**：
-  - `True`：存在至少一个监听器。
-  - `False`：无监听器。
-
-示例：
-
-```python
-emitter.emit("data", [1, 2, 3])  # 输出：收到数据：[1, 2, 3]
-```
-
----
-
 ## 操作符重载
 
 ### `+=` 快速注册监听器
@@ -120,27 +159,22 @@ emitter -= "click"
 ```python
 from EventEmitter import EventEmitter
 
-# 初始化发射器
-emitter = EventEmitter()
+# 初始化带配置的发射器
+emitter = EventEmitter({"backwardTransfer": True})
 
-# 定义回调函数
-def log_event(args: List[Any]):
-    print(f"日志事件：{args}")
+# 注册监听器（返回处理结果）
+emitter.on("process", lambda args: f"处理结果：{args[0] * 2}")
 
-# 注册事件
-emitter.on("log", log_event)
-emitter += {"act": "error", "cb": lambda args: print(f"错误：{args[0]}")}
+# 触发事件并获取返回值
+result = emitter.emit("process", [10])
+print(result)  # 输出：处理结果：20
 
-# 触发事件
-emitter.emit("log", ["用户登录"])      # 输出：日志事件：['用户登录']
-emitter.emit("error", ["权限不足"])    # 输出：错误：权限不足
+# 移除监听器
+emitter -= "process"
 
-# 移除事件
-emitter.deon("log")
-emitter -= "error"
-
-# 再次触发（无监听器）
-emitter.emit("log", [])               # 返回 False
+# 再次触发（无监听器，返回 None）
+result = emitter.emit("process", [])
+print(result)  # 输出：None
 ```
 
 ---
@@ -175,6 +209,9 @@ emitter.emit("log", [])               # 返回 False
    - `+=` 必须使用键名 `act` 和 `cb`，否则操作无效。
    - `-=` 只能移除事件的全部监听器，无法移除单个回调。
 
+7. **返回值传递**：
+   - 若启用 `backwardTransfer`，确保回调函数有明确返回值。未显式返回时，默认返回 `None`。
+   - 返回值传递模式下，即使存在多个监听器，仅最后一个监听器的返回值会被传递。
 --- 
 
 通过本手册，您可以快速掌握 `EventEmitter` 的核心功能。如有进一步问题，可参考源码或提交 Issue。
