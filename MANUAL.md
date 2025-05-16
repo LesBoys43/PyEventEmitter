@@ -115,6 +115,12 @@ def on_data_received(args: List[Any]):
 emitter.on("data", on_data_received)
 ```
 
+#### 仅限一次（once）
+- **功能**：为指定事件（`action`）绑定回调函数（`cb`）但是只会被调用一次。
+- **参数**：
+  - `action`：事件名称（字符串）。
+  - `cb`：回调函数，需接受一个 `List[Any]` 类型的参数。
+
 ---
 
 ### 移除事件监听器
