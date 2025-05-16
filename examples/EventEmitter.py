@@ -16,6 +16,8 @@ class EventEmitter:
             cfg: 配置选项
         """
         self.cfg = cfg
+        if cfg.get("backwardTransfer") is None:
+            cfg["backwardTransfer"] = False
         self.listeners: List[EventListener] = []
     
     def on(self, action: str, cb: Callable) -> None:
@@ -39,7 +41,7 @@ class EventEmitter:
             if listener.event == action:
                 self.listeners.remove(listener)
     
-    def emit(self, action: str, args: List[Any]) -> bool:
+    def emit(self, action: str, args: List[Any]) -> any:
         """
         触发指定事件
         
@@ -49,13 +51,18 @@ class EventEmitter:
 
         Returns:
             bool: 是否存在对应的监听器
+            或
+            any: Listener的返回值
         """
         has = False
+        bwrd = None
         for listener in self.listeners:
             if listener.event == action:
                 has = True
                 event = Event(action, args)
-                listener(event)
+                bwrd = listener(event)
+        if self.cfg["backwardTransfer"]:
+            return bwrd
         return has
     
     def __iadd__(self, other: Dict[str, Union[str, Callable]]) -> "EventEmitter":
