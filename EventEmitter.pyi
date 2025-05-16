@@ -39,7 +39,7 @@ class EventEmitter:
         """
         ...
     
-    def emit(self, action: str, args: List[Any]) -> bool:
+    def emit(self, action: str, args: List[Any]) -> any:
         """
         触发指定事件
         
@@ -49,6 +49,8 @@ class EventEmitter:
 
         Returns:
             bool: 是否存在对应的监听器
+            或
+            any: Listener的返回值
         """
         ...
     
