@@ -1,0 +1,37 @@
+name: Auto-Copy Python Files
+
+on:
+  push:
+    branches: ['**']
+
+jobs:
+  check-and-copy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Get changed files
+      id: changed
+      uses: dorny/paths-filter@v2
+      with:
+        filters: |
+          py_files:
+            - '*.py'
+            - '!examples/*.py'
+
+    - name: Copy Python files
+      if: steps.changed.outputs.py_files == 'true'
+      run: |
+        find . -maxdepth 1 -name '*.py' -exec cp --parents -t examples/ {} +
+        git config --global user.name "Twinkle"
+        git config --global user.email "twinkle@lesboys.org"
+
+    - name: Commit changes
+      if: steps.changed.outputs.py_files == 'true'
+      run: |
+        git add examples/*.py
+        git commit -m "+ACTION: Purge+ merge files"
+        git push
