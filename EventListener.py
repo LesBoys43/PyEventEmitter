@@ -32,4 +32,6 @@ class EventListener:
         # 事件名称匹配时才执行回调
         if self.event == action:
             # 将事件参数列表传递给监听器
-            self.listener(args)
+            return self.listener(args)
+            
+        return None
