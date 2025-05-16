@@ -11,14 +11,17 @@ class EventListener:
     """
     event: str
     listener: Callable
+    once: bool
+    trigged: bool
 
-    def __init__(self, event: str, listener: Callable) -> None:
+    def __init__(self, event: str, listener: Callable, once: bool = False) -> None:
         """
         初始化事件监听器
 
         Args:
             event: 要监听的事件名称标识
             listener: 事件匹配时执行的回调函数，接收参数列表
+            once: 是否只允许触发一次
         """
         ...
 
