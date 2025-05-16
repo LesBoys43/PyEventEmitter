@@ -39,7 +39,7 @@ class EventEmitter:
             if listener.event == action:
                 self.listeners.remove(listener)
     
-    def emit(self, action: str, args: List[Any]) -> bool:
+    def emit(self, action: str, args: List[Any]) -> any:
         """
         触发指定事件
         
@@ -51,11 +51,14 @@ class EventEmitter:
             bool: 是否存在对应的监听器
         """
         has = False
+        bwrd = None
         for listener in self.listeners:
             if listener.event == action:
                 has = True
                 event = Event(action, args)
-                listener(event)
+                bwrd = listener(event)
+        if self.cfg["backwardTransfer"]:
+            return bwrd
         return has
     
     def __iadd__(self, other: Dict[str, Union[str, Callable]]) -> "EventEmitter":
