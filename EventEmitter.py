@@ -51,6 +51,8 @@ class EventEmitter:
 
         Returns:
             bool: 是否存在对应的监听器
+            或
+            any: Listener的返回值
         """
         has = False
         bwrd = None
