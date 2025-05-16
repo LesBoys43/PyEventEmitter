@@ -20,12 +20,15 @@ class EventListener:
         self.event = event
         self.listener = listener
 
-    def __call__(self, event: Event) -> None:
+    def __call__(self, event: Event) -> any:
         """
         执行事件监听逻辑（使实例可被直接调用）
         
         Args:
             event: 接收到的事件对象，包含事件名称和参数
+        
+        Returns:
+            any: Listener的返回值（如果适用的话）
         """
         args: List[Any] = event.args
         action: str = event.action
