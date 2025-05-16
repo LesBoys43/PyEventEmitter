@@ -16,6 +16,8 @@ class EventEmitter:
             cfg: 配置选项
         """
         self.cfg = cfg
+        if cfg.get("backwardTransfer") is None:
+            cfg["backwardTransfer"] = False
         self.listeners: List[EventListener] = []
     
     def on(self, action: str, cb: Callable) -> None:
