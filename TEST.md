@@ -1,4 +1,4 @@
-Some tests failed in 2025-05-17T20:48:22Z, triggered by commit 3d6f5f7, log:
+Some tests failed in 2025-05-17T20:54:57Z, triggered by commit ff84df0, log:
 [调试] 触发 'great' 事件结果: True (预期: True)
 Execute: 基础调用 - 找到监听器; Summary: Nothing
 Result: Pass
@@ -33,18 +33,18 @@ Result: Pass
 [调试] 首次触发结果: True (预期: True)
 Execute: 仅限一次 - 第一次; Summary: Nothing
 Result: Pass
-[调试] 首次存在性检查结果: ['login'] (预期: ['login'])
+[调试] 首次存在性检查结果: [] (预期: ['login'])
 Execute: 仅限一次 - 第一次存在性检查; Summary: Nothing
-Result: Pass
+Result: Fail
 [调试] 首次触发后状态: True (预期: True)
 Execute: 仅限一次 - 第一次正确调用; Summary: Nothing
 Result: Pass
 [调试] 二次触发结果: False (预期: False)
 Execute: 仅限一次 - 第二次; Summary: Nothing
 Result: Pass
-[调试] 首次存在性检查结果: ['login'] (预期: [])
+[调试] 首次存在性检查结果: [] (预期: [])
 Execute: 仅限一次 - 第二次存在性检查; Summary: Nothing
-Result: Fail
+Result: Pass
 [调试] 二次触发后状态: True (预期: True)
-Execute: 仅限一次 - 第一次正确未调用; Summary: Nothing
+Execute: 仅限一次 - 第二次正确未调用; Summary: Nothing
 Result: Pass
