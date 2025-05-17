@@ -1,4 +1,4 @@
-All test passed in 2025-05-17T20:26:24Z, triggered by commit 8ffff72, log:
+Some tests failed in 2025-05-17T20:48:22Z, triggered by commit 3d6f5f7, log:
 [调试] 触发 'great' 事件结果: True (预期: True)
 Execute: 基础调用 - 找到监听器; Summary: Nothing
 Result: Pass
@@ -33,9 +33,18 @@ Result: Pass
 [调试] 首次触发结果: True (预期: True)
 Execute: 仅限一次 - 第一次; Summary: Nothing
 Result: Pass
-Traceback (most recent call last):
-  File "test4.py", line 39, in <module>
-    do_test()
-  File "test4.py", line 20, in do_test
-    print(f"[调试] 首次存在性检查结果: {listeners} (预期: ['login'])")
-NameError: name 'listeners' is not defined
+[调试] 首次存在性检查结果: ['login'] (预期: ['login'])
+Execute: 仅限一次 - 第一次存在性检查; Summary: Nothing
+Result: Pass
+[调试] 首次触发后状态: True (预期: True)
+Execute: 仅限一次 - 第一次正确调用; Summary: Nothing
+Result: Pass
+[调试] 二次触发结果: False (预期: False)
+Execute: 仅限一次 - 第二次; Summary: Nothing
+Result: Pass
+[调试] 首次存在性检查结果: ['login'] (预期: [])
+Execute: 仅限一次 - 第二次存在性检查; Summary: Nothing
+Result: Fail
+[调试] 二次触发后状态: True (预期: True)
+Execute: 仅限一次 - 第一次正确未调用; Summary: Nothing
+Result: Pass
