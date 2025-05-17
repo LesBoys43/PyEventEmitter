@@ -21,6 +21,8 @@ jobs:
         python-version: "3.8.6"
         activate-environment: "test-env"
         auto-activate-base: false
+        channels: conda-forge,defaults
+        channel-priority: strict
 
     - name: Copy Python files
       run: cp *.py maintenance/tests/
