@@ -1,5 +1,7 @@
 #!/bin/bash
 
+cd maintenance/tests/
+
 # 创建或清空testing.log文件
 > testing.log
 
