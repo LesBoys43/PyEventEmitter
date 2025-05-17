@@ -33,7 +33,7 @@ def do_test():
     test("仅限一次 - 第二次存在性检查", listeners2, [])
     
     print(f"[调试] 二次触发后状态: {loggedIn} (预期: True)")
-    test("仅限一次 - 第一次正确未调用", loggedIn, True)
+    test("仅限一次 - 第二次正确未调用", loggedIn, True)
 
 if __name__ == "__main__":
     do_test()
