@@ -13,12 +13,12 @@ def do_test():
     emitter.once("login", login)
     
     # 测试用例1 - 第一次触发
-    emit_result1 = emitter.emit("login", [])
-    print(f"[调试] 首次触发结果: {emit_result1} (预期: True)")
-    test("仅限一次 - 第一次", emit_result1, True)
     listeners = dir(emitter)
     print(f"[调试] 首次存在性检查结果: {listeners} (预期: ['login'])")
     test("仅限一次 - 第一次存在性检查", listeners, ["login"])
+    emit_result1 = emitter.emit("login", [])
+    print(f"[调试] 首次触发结果: {emit_result1} (预期: True)")
+    test("仅限一次 - 第一次", emit_result1, True)
     
     print(f"[调试] 首次触发后状态: {loggedIn} (预期: True)")
     test("仅限一次 - 第一次正确调用", loggedIn, True)
