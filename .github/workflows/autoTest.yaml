@@ -1,37 +1,83 @@
-- name: Run tests and generate report
-  if: steps.changed.outputs.py_files == 'true'
-  shell: bash -l {0}
-  run: |
-    set +e  # 禁用自动失败
-    # 捕获测试输出（允许失败）
-    output=$(maintenance/tests/DO_TEST.sh 2>&1)
-    exit_code=$?
-    set -e  # 恢复错误检查
+name: Run Maintenance Tests
 
-    # 生成报告文件
-    isoDateTime=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-    commit="${GITHUB_SHA::7}"
-    
-    # 动态生成报告内容
-    {
-      echo "## Test Report - $isoDateTime"
-      echo "**Commit:** $commit"
-      [ $exit_code -eq 0 ] && echo "**Status:** ✅ All tests passed" || echo "**Status:** ❌ Some tests failed"
-      echo "\n### Execution Log:\n\`\`\`"
-      echo "$output"
-      echo "\`\`\`"
-    } > TEST.md
+on:
+  push:
+    branches: [master]
+  workflow_dispatch: null
 
-    # Git操作配置
-    git config --global user.name "Twinkle"
-    git config --global user.email "twinkle@lesboys.org"
+jobs:
+  execute-tests:
+    name: Run test script
+    runs-on: ubuntu-latest
 
-    # 提交操作（带异常处理）
-    git add TEST.md
-    git commit -m "+ACTION: Auto-test report update" || true  # 允许空提交失败
-    
-    # 关键清理操作
-    git clean -fdx  # 强制清理未跟踪文件
-    
-    # 强制推送（确保触发后续流程）
-    git push origin HEAD:${GITHUB_REF#refs/heads/} -f
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get changed files
+        id: changed
+        uses: dorny/paths-filter@v2
+        with:
+          filters: |
+            py_files:
+              - '*.py'
+              - '!examples/*.py'
+
+      - name: Setup Miniconda
+        if: steps.changed.outputs.py_files == 'true'
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          miniconda-version: "latest"
+          python-version: "3.8.6"
+          activate-environment: "test-env"
+          auto-activate-base: false
+          channels: conda-forge,defaults
+          channel-priority: strict
+
+      - name: Copy Python files
+        if: steps.changed.outputs.py_files == 'true'
+        run: cp *.py maintenance/tests/
+
+      - name: Make script executable
+        if: steps.changed.outputs.py_files == 'true'
+        run: chmod +x maintenance/tests/DO_TEST.sh
+
+      - name: Run tests and generate report
+        if: steps.changed.outputs.py_files == 'true'
+        shell: bash -l {0}
+        run: |
+          set +e  # 禁用自动失败
+          
+          # 执行测试并捕获输出
+          output=$(maintenance/tests/DO_TEST.sh 2>&1)
+          exit_code=$?
+          
+          # 生成原始格式报告
+          isoDateTime=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          commit="${GITHUB_SHA::7}"
+
+          if [ $exit_code -eq 0 ]; then
+            echo "All test passed in $isoDateTime, triggered by commit $commit, log:" > TEST.md
+          else
+            echo "Some tests failed in $isoDateTime, triggered by commit $commit, log:" > TEST.md
+          fi
+          echo "$output" >> TEST.md
+
+          # 配置Git
+          git config --global user.name "Twinkle"
+          git config --global user.email "twinkle@lesboys.org"
+          
+          # 提交操作
+          git add TEST.md
+          git commit -m "+ACTION: Edit+ put auto-test report" || true
+          
+          # 强制清理（保留原始命令）
+          git clean -fdx
+          
+          # 强制推送
+          git push origin HEAD:${GITHUB_REF#refs/heads/} -f
+
+          # 确保步骤始终成功
+          exit 0
