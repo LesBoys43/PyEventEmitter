@@ -87,7 +87,7 @@ class EventEmitter:
       res = []
       
       for listener in self.listeners:
-          if listener.event not in res:
+          if listener.event not in res and (not listener.once or (listener.once and not listener.trigged)):
             res.append(listener.event)
             
       return res
