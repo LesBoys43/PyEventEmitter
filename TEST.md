@@ -1,6 +1,9 @@
-All test passed in 2025-05-17T19:14:31Z, triggered by commit f7d9b39, log:
+All test passed in 2025-05-17T20:26:24Z, triggered by commit 8ffff72, log:
 [调试] 触发 'great' 事件结果: True (预期: True)
 Execute: 基础调用 - 找到监听器; Summary: Nothing
+Result: Pass
+[调试] 监听器列表: ['great'] (预期: ['great'])
+Execute: 基础调用 - 列出监听器; Summary: Nothing
 Result: Pass
 [调试] 回调后 'hey' 的值: 'Hello, Peppa' (预期: 'Hello, Peppa')
 Execute: 基础调用 - 回调被正确调用; Summary: Nothing
@@ -30,12 +33,9 @@ Result: Pass
 [调试] 首次触发结果: True (预期: True)
 Execute: 仅限一次 - 第一次; Summary: Nothing
 Result: Pass
-[调试] 首次触发后状态: True (预期: True)
-Execute: 仅限一次 - 第一次正确调用; Summary: Nothing
-Result: Pass
-[调试] 二次触发结果: False (预期: False)
-Execute: 仅限一次 - 第二次; Summary: Nothing
-Result: Pass
-[调试] 二次触发后状态: True (预期: True)
-Execute: 仅限一次 - 第一次正确未调用; Summary: Nothing
-Result: Pass
+Traceback (most recent call last):
+  File "test4.py", line 39, in <module>
+    do_test()
+  File "test4.py", line 20, in do_test
+    print(f"[调试] 首次存在性检查结果: {listeners} (预期: ['login'])")
+NameError: name 'listeners' is not defined
