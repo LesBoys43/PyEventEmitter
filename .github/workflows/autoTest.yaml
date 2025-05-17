@@ -1,9 +1,10 @@
+---
 name: Run Maintenance Tests
 
 on:
   push:
-    branches: [ master ]
-  workflow_dispatch:  
+    branches: [master]
+  workflow_dispatch: null
 
 jobs:
   execute-tests:
@@ -11,26 +12,63 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Setup Miniconda
-      uses: conda-incubator/setup-miniconda@v3
-      with:
-        miniconda-version: "latest"
-        python-version: "3.8.6"
-        activate-environment: "test-env"
-        auto-activate-base: false
-        channels: conda-forge,defaults
-        channel-priority: strict
+      - name: Get changed files
+        id: changed
+        uses: dorny/paths-filter@v2
+        with:
+          filters: |
+            py_files:
+              - '*.py'
+              - '!examples/*.py'
 
-    - name: Copy Python files
-      run: cp *.py maintenance/tests/
+      - name: Setup Miniconda
+        if: steps.changed.outputs.py_files == 'true'
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          miniconda-version: "latest"
+          python-version: "3.8.6"
+          activate-environment: "test-env"
+          auto-activate-base: false
+          channels: conda-forge,defaults
+          channel-priority: strict
 
-    - name: Make script executable
-      run: chmod +x maintenance/tests/DO_TEST.sh
+      - name: Copy Python files
+        if: steps.changed.outputs.py_files == 'true'
+        run: cp *.py maintenance/tests/
 
-    - name: Run tests
-      shell: bash -l {0}
-      run: |
-        maintenance/tests/DO_TEST.sh
+      - name: Make script executable
+        if: steps.changed.outputs.py_files == 'true'
+        run: chmod +x maintenance/tests/DO_TEST.sh
+
+      - name: Run tests and generate report
+        if: steps.changed.outputs.py_files == 'true'
+        shell: bash -l {0}
+        run: |
+          # Capture test output
+          output=$(maintenance/tests/DO_TEST.sh 2>&1)
+          exit_code=$?
+          
+          # Get required values
+          isoDateTime=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          commit="${GITHUB_SHA::7}"
+          branch=$(git rev-parse --abbrev-ref HEAD)
+          
+          # Generate report content
+          if [ $exit_code -eq 0 ]; then
+            echo "All test passed in $isoDateTime, triggered by commit $commit, log:" > TEST.md
+          else
+            echo "Some tests failed in $isoDateTime, triggered by commit $commit, log:" > TEST.md
+          fi
+          echo "$output" >> TEST.md
+          
+          # Configure git
+          git config --global user.name "Twinkle"
+          git config --global user.email "twinkle@lesboys.org"
+          
+          # Commit and push
+          git add TEST.md
+          git commit -m "+ACTION: Edit+ put auto-test report"
+          git push origin HEAD:${GITHUB_REF#refs/heads/}
