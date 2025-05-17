@@ -20,6 +20,9 @@ def do_test():
   emit_result = emitter.emit("great", ["Peppa"])
   print(f"[调试] 触发 'great' 事件结果: {emit_result} (预期: True)")
   test("基础调用 - 找到监听器", emit_result, True)
+  listeners = dir(emitter)
+  print(f"[调试] 监听器列表: {listeners} (预期: ['great'])")
+  test("基础调用 - 列出监听器", listeners, ["great"])
   
   print(f"[调试] 回调后 'hey' 的值: {repr(hey)} (预期: 'Hello, Peppa')")
   test("基础调用 - 回调被正确调用", hey, "Hello, Peppa")
