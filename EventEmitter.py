@@ -68,6 +68,8 @@ class EventEmitter:
         bwrd = None
         for listener in self.listeners:
             if listener.event == action and (not listener.once or (listener.once and not listener.trigged)):
+                if listener.once:
+                    self.deon(listener.event)
                 has = True
                 event = Event(action, args)
                 bwrd = listener(event)
