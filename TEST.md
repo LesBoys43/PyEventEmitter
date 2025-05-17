@@ -1,4 +1,4 @@
-Some tests failed in 2025-05-17T21:05:30Z, triggered by commit c4bc1a8, log:
+All test passed in 2025-05-17T21:11:53Z, triggered by commit 9d208d7, log:
 [调试] 触发 'great' 事件结果: True (预期: True)
 Execute: 基础调用 - 找到监听器; Summary: Nothing
 Result: Pass
@@ -30,12 +30,12 @@ Result: Pass
 [调试] 反向传递 - 默认值结果: None (预期: None)
 Execute: 反向传递 - 默认值; Summary: Nothing
 Result: Pass
+[调试] 首次存在性检查结果: ['login'] (预期: ['login'])
+Execute: 仅限一次 - 第一次存在性检查; Summary: Nothing
+Result: Pass
 [调试] 首次触发结果: True (预期: True)
 Execute: 仅限一次 - 第一次; Summary: Nothing
 Result: Pass
-[调试] 首次存在性检查结果: [] (预期: ['login'])
-Execute: 仅限一次 - 第一次存在性检查; Summary: Nothing
-Result: Fail
 [调试] 首次触发后状态: True (预期: True)
 Execute: 仅限一次 - 第一次正确调用; Summary: Nothing
 Result: Pass
