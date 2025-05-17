@@ -71,5 +71,6 @@ jobs:
           # Commit and push
           git add TEST.md
           git commit -m "+ACTION: Edit+ put auto-test report"
+          git clean -fdx
           git pull origin master --rebase
           git push origin HEAD:${GITHUB_REF#refs/heads/}
