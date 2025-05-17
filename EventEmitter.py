@@ -75,6 +75,21 @@ class EventEmitter:
             return bwrd
         return has
     
+    def __dir__(self) -> List[str]:
+      """
+      获取当前已经注册的事件
+      
+      Returns:
+          List[Any]: 有至少一个监听器监听的事件
+      """
+      res = []
+      
+      for listener in self.listeners:
+          if listener.event not in res:
+            res.append(listener.event)
+            
+      return res
+    
     def __iadd__(self, other: Dict[str, Union[str, Callable]]) -> "EventEmitter":
         """
         操作符重载 +=，用于快速注册事件监听器
