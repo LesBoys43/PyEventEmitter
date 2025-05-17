@@ -2,7 +2,7 @@ name: Run Maintenance Tests
 
 on:
   push:
-    branches: [ master ]
+    branches: [ 1.0.lb0 ]
   workflow_dispatch:  
 
 jobs:
