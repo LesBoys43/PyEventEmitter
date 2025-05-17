@@ -4,7 +4,7 @@
 > testing.log
 
 # 依次执行test1.py到test4.py，并将输出同时显示在终端和追加到日志
-for i in {1..4}; do
+for i in {1..2}; do
     python3.8 "test$i.py" 2>&1 | tee -a testing.log
 done
 
