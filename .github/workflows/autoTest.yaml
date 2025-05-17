@@ -1,0 +1,31 @@
+name: Run Maintenance Tests
+
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:  
+
+jobs:
+  execute-tests:
+    name: Run test script
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.8.6
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.8.6'
+
+    - name: Copy Python files to tests directory
+      run: |
+        # 复制根目录所有.py文件（不包含子目录）到目标路径
+        cp *.py maintenance/tests/
+
+    - name: Ensure test script is executable
+      run: chmod +x maintenance/tests/DO_TEST.sh
+
+    - name: Execute test script
+      run: bash maintenance/tests/DO_TEST.sh
