@@ -14,18 +14,21 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Set up Python 3.8.6
-      uses: actions/setup-python@v5
+    - name: Setup Miniconda
+      uses: conda-incubator/setup-miniconda@v3
       with:
-        python-version: '3.8.6'
+        miniconda-version: "latest"
+        python-version: "3.8.6"
+        activate-environment: "test-env"
+        auto-activate-base: false
 
-    - name: Copy Python files to tests directory
-      run: |
-        # 复制根目录所有.py文件（不包含子目录）到目标路径
-        cp *.py maintenance/tests/
+    - name: Copy Python files
+      run: cp *.py maintenance/tests/
 
-    - name: Ensure test script is executable
+    - name: Make script executable
       run: chmod +x maintenance/tests/DO_TEST.sh
 
-    - name: Execute test script
-      run: bash maintenance/tests/DO_TEST.sh
+    - name: Run tests
+      shell: bash -l {0}
+      run: |
+        maintenance/tests/DO_TEST.sh
