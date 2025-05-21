@@ -16,15 +16,14 @@ class Hook:
         """
         ...
 
-    def __call__(self, *args, **kwargs) -> Any:
+    def __init__(self, cb: Callable[[List[Any], Dict[str, Any]], Any]) -> None:
         """
-        执行回调函数转换
+        初始化钩子实例
 
         Args:
-            *args: 原始位置参数
-            **kwargs: 原始关键字参数
-
-        Returns:
-            Any: 回调函数的执行结果
+            cb: 回调函数，接受位置参数列表和关键字参数字典
+            
+        Raises:
+            TypeError: 参数无效时
         """
         ...
