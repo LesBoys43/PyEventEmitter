@@ -7,7 +7,7 @@ class Hook:
     属性:
         cb (Callable[[List[Any], Dict[str, Any]], Any): 注册的回调函数
     """
-    def __init__(cb: Callable[[List[Any], Dict[str, Any]], Any]) -> None:
+    def __init__(self, cb: Callable[[List[Any], Dict[str, Any]], Any]) -> None:
         """
         初始化钩子实例
 
