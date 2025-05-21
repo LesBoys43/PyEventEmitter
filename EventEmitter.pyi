@@ -96,3 +96,16 @@ class EventEmitter:
             EventEmitter: 返回实例本身以支持链式调用
         """
         ...
+    
+    def hook(act: str, cb: Callable[[List[Any], Dict[str, Any]], None]) -> None:
+        """
+        注册一个钩子以在特定动作发生时执行回调函数
+
+        Args:
+            act (str): 钩子的名称，必须是available_hooks中定义的可用钩子之一
+            cb (Callable[[List[Any], Dict[str, Any]], None]): 回调函数，接受参数列表和参数字典
+
+        Raises:
+            ValueError: 如果钩子名称不在支持的可用钩子列表中
+        """
+        ...
