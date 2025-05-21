@@ -1,0 +1,1 @@
+available_hooks = ['test-only']
