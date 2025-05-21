@@ -11,6 +11,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Waiting
+        run: sleep 15
+      
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
