@@ -1,6 +1,8 @@
 from typing import List, Any, Callable, Union, Dict
 from Event import Event
 from EventListener import EventListener
+from Hook import Hook
+from GlobalSettings import available_hooks
 
 class EventEmitter:
     """
@@ -15,6 +17,9 @@ class EventEmitter:
         Args:
             cfg: 配置选项
         """
+        self.hooks = {}
+        for hook in available_hooks:
+            self.hooks[hook] = []
         self.cfg = cfg
         if cfg.get("backwardTransfer") is None:
             cfg["backwardTransfer"] = False
@@ -118,3 +123,19 @@ class EventEmitter:
         """
         self.deon(other)
         return self
+        
+    def hook(act: str, cb: Callable[[List[Any], Dict[str, Any]], None]) -> None:
+    """
+    注册一个钩子以在特定动作发生时执行回调函数
+
+    Args:
+        act (str): 钩子的名称，必须是available_hooks中定义的可用钩子之一
+        cb (Callable[[List[Any], Dict[str, Any]], None]): 回调函数，接受参数列表和参数字典
+
+    Raises:
+        ValueError: 如果钩子名称不在支持的可用钩子列表中
+    """
+        if act not in available_hooks:
+            raise ValueError("Unsupported hook")
+    
+        self.hooks[act].append(Hook(cb))
