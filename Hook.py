@@ -13,7 +13,13 @@ class Hook:
 
         Args:
             cb: 回调函数，接受位置参数列表和关键字参数字典
+            
+        Raises:
+            TypeError: 参数无效时
         """
+        if not callable(cb):
+           raise TypeError("Invalid callback")
+        
         self.cb = cb
 
     def __call__(self, *args, **kwargs) -> Any:
