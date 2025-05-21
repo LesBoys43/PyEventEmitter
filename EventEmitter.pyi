@@ -9,6 +9,7 @@ class EventEmitter:
 
     属性:
         listeners (List[EventListener]): 存储所有事件监听器的列表。
+        hooks: (Dict[str, List[Hook]]): 勾子列表。
     """
     listeners: List[EventListener]
     
