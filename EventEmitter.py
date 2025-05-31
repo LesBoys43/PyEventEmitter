@@ -69,10 +69,19 @@ class EventEmitter:
             或
             any: Listener的返回值
         """
+        if len(self.hooks['sth-emitted']) > 0:
+            for hook in self.hooks['sth-emitted']:
+                hook(emitted=action, args=args)
         has = False
         bwrd = None
+        hooked = False
         for listener in self.listeners:
             if listener.event == action and (not listener.once or (listener.once and not listener.trigged)):
+                if hooked == False:
+                    if len(self.hooks['sth-emitted-exist-listener']) > 0:
+                        for hook in self.hooks['sth-emitted']:
+                            hook(emitted=action, args=args)
+                    hooked = True
                 if listener.once:
                     self.deon(listener.event)
                 has = True
