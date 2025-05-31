@@ -503,7 +503,13 @@ $TESTS_HOME/EventListener.py:
 $TESTS_HOME/Event.py:
 	\$(COPY) \$(ROOT)/Event.py $TESTS_HOME/Event.py
 
-configEnv: $TESTS_HOME/EventEmitter.py $TESTS_HOME/EventListener.py $TESTS_HOME/Event.py
+$TESTS_HOME/Hook.py:
+	\$(COPY) \$(ROOT)/Hookpy $TESTS_HOME/Hook.py
+	
+$TESTS_HOME/GlobalSettings.py:
+	\$(COPY) \$(ROOT)/GlobalSettings.py $TESTS_HOME/GlobalSettings.py
+
+configEnv: $TESTS_HOME/EventEmitter.py $TESTS_HOME/EventListener.py $TESTS_HOME/Event.py $TESTS_HOME/Hook.py $TESTS_HOME/GlobalSettings.py 
 	\$(DELETE) .coverage* || true
 
 actEnv: configEnv
@@ -553,7 +559,7 @@ deactEnv: actEnv .coverage.end
 
 clean: .coverage.end deactEnv
 	\$(DELETE) .coverage.ok .coverage.end
-	\$(DELETE) $TESTS_HOME/EventEmitter.py $TESTS_HOME/EventListener.py $TESTS_HOME/Event.py
+	\$(DELETE) $TESTS_HOME/EventEmitter.py $TESTS_HOME/EventListener.py $TESTS_HOME/Event.py $TESTS_HOME/Hooks.py $TESTS_HOME/GlobalSettings.py
 	\$(DELETE) .lesboys.maintenance*
 EOMF
 
