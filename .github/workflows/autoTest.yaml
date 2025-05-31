@@ -11,9 +11,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Waiting
-        run: sleep 30
-      
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
@@ -78,6 +75,8 @@ jobs:
           
           # 强制清理（保留原始命令）
           git clean -fdx
+          
+          git pull --rebase || true
           
           # 强制推送
           git push origin HEAD:${GITHUB_REF#refs/heads/} -f
