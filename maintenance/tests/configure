@@ -354,6 +354,7 @@ view() {
 view "$PROJ_HOME/EventEmitter.py"
 view "$PROJ_HOME/EventListener.py"
 view "$PROJ_HOME/Event.py"
+view "$PROJ_HOME/Hook.py"
 view "$TESTS_HOME/test1.py"
 view "$TESTS_HOME/test2.py"
 view "$TESTS_HOME/test3.py"
@@ -405,16 +406,17 @@ cd $PROJ_HOME
 view_import "EventEmitter" "EventEmitter.EventEmitter" ""
 view_import "EventListener" "EventListener.EventListener" "None,None"
 view_import "Event" "Event.Event" "None,None"
+view_import "Hook" "Hook.Hook", "lambda a: a + 1,None"
 
 # Test files pre-test
 cd $TESTS_HOME
-cp $PROJ_HOME/Event*.py $TESTS_HOME
+cp $PROJ_HOME/*.py $TESTS_HOME
 view_import "liblbtest" "null"
 view_import "test1" "null"
 view_import "test2" "null"
 view_import "test3" "null"
 view_import "test4" "null"
-rm $TESTS_HOME/Event*.py
+rm $TESTS_HOME/Event*.py $TESTS_HOME/Hook.py $TESTS_HOME/GlobalSettings.py
 
 # Define cleanup_arg_test andtest_coverage_arg
 cleanup_arg_test() {
