@@ -1,1 +1,1 @@
-available_hooks = ['test-only']
+available_hooks = ['sth-emitted', 'sth-emitted-exist-listener']
