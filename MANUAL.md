@@ -8,15 +8,16 @@
 
 1. [安装](#安装)
 2. [配置选项](#配置选项)
-3. [基本用法](#基本用法)
+3. [钩子功能](#钩子功能)
+4. [基本用法](#基本用法)
    - [初始化](#初始化)
    - [注册事件监听器](#注册事件监听器)
    - [移除事件监听器](#移除事件监听器)
    - [触发事件](#触发事件)
    - [获取监听器列表](#获取监听器列表)
-4. [操作符重载](#操作符重载)
-5. [完整示例](#完整示例)
-6. [注意事项](#注意事项)
+5. [操作符重载](#操作符重载)
+6. [完整示例](#完整示例)
+7. [注意事项](#注意事项)
 
 ---
 
@@ -49,6 +50,41 @@ emitter_default = EventEmitter()
 
 # 启用返回值传递
 emitter_custom = EventEmitter({"backwardTransfer": True})
+```
+
+---
+
+## 钩子功能（新增）
+
+钩子（Hooks）允许在事件触发前后执行自定义逻辑，适用于日志记录、参数验证等场景。
+
+### 可用钩子类型
+- `sth-emitted`：任何事件被触发时调用
+- `sth-emitted-exist-listener`：有监听器的事件被触发时调用（在监听器执行前）
+
+### 注册钩子
+#### 方法 `hook(act: str, cb: Callable)`
+- **功能**：为特定动作注册钩子
+- **参数**：
+  - `act`：钩子类型（必须是支持的钩子类型）
+  - `cb`：回调函数，接受以下参数：
+    - `args`：原始事件参数列表
+    - `kwargs`：包含事件信息的字典（键 `emitted` 为事件名）
+- **异常**：如果钩子类型不支持，抛出 `ValueError`
+
+示例：
+```python
+# 注册全局事件日志钩子
+def log_hook(args, kwargs):
+    print(f"事件触发: {kwargs['emitted']}, 参数: {args}")
+
+emitter.hook("sth-emitted", log_hook)
+
+# 注册带监听器的事件钩子
+def listener_hook(args, kwargs):
+    print(f"事件 {kwargs['emitted']} 有监听器将被执行")
+
+emitter.hook("sth-emitted-exist-listener", listener_hook)
 ```
 
 ---
@@ -174,19 +210,32 @@ from EventEmitter import EventEmitter
 # 初始化带配置的发射器
 emitter = EventEmitter({"backwardTransfer": True})
 
-# 注册监听器（返回处理结果）
+# 注册钩子：记录所有触发的事件
+def global_hook(args, kwargs):
+    print(f"[全局钩子] 事件 {kwargs['emitted']} 被触发，参数: {args}")
+
+emitter.hook("sth-emitted", global_hook)
+
+# 注册钩子：记录有监听器的事件
+def listener_hook(args, kwargs):
+    print(f"[监听器钩子] 事件 {kwargs['emitted']} 有监听器")
+
+emitter.hook("sth-emitted-exist-listener", listener_hook)
+
+# 注册监听器
 emitter.on("process", lambda args: f"处理结果：{args[0] * 2}")
 
 # 触发事件并获取返回值
 result = emitter.emit("process", [10])
+# 输出:
+# [全局钩子] 事件 process 被触发，参数: [10]
+# [监听器钩子] 事件 process 有监听器
 print(result)  # 输出：处理结果：20
 
-# 移除监听器
-emitter -= "process"
-
-# 再次触发（无监听器，返回 None）
-result = emitter.emit("process", [])
-print(result)  # 输出：None
+# 触发无监听器的事件
+emitter.emit("unknown", [1, 2, 3])
+# 输出:
+# [全局钩子] 事件 unknown 被触发，参数: [1, 2, 3]
 ```
 
 ---
@@ -224,6 +273,11 @@ print(result)  # 输出：None
 7. **返回值传递**：
    - 若启用 `backwardTransfer`，确保回调函数有明确返回值。未显式返回时，默认返回 `None`。
    - 返回值传递模式下，即使存在多个监听器，仅最后一个监听器的返回值会被传递。
+
+8. **钩子使用**：
+   - 钩子名称必须完全匹配可用钩子列表（`sth-emitted`, `sth-emitted-exist-listener`）
+   - 钩子回调中修改参数不会影响实际的事件参数传递
+   - 钩子应避免执行长时间阻塞操作
 --- 
 
 通过本手册，您可以快速掌握 `EventEmitter` 的核心功能。如有进一步问题，可参考源码或提交 Issue。
