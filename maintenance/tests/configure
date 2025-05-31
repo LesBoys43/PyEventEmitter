@@ -1,0 +1,561 @@
+#!/usr/bin/bash -i
+
+# Configure script of PyEventEmitter tester, (c) Copyright LesBoys BSD-3 clause
+
+PROJ_HOME=$(dirname $(dirname $(pwd)))
+TESTS_HOME=$(pwd)
+
+_PATH_USER=$(echo " $* " | grep -oP '(?<= -F )\S+')
+
+if [ -z "$_PATH_USER" ]; then
+	MF_PATH=$TESTS_HOME
+else
+	MF_PATH=$_PATH_USER
+fi
+
+[[ " $* " =~ " -V " ]] && VERBOSE=1 || VERBOSE=0
+
+if [[ " $* " =~ " -H " ]]; then
+	echo "(c) Copyright LesBoys BSD-3 clause"
+	echo "Use this script to configure tester of PyEventEmitter and generate TEST.makefile"
+	echo "Props:"
+	echo "++ --PROPS_CONDA <value>: Define conda home path (like /foo/bar/anaconda3)"
+	echo "++ --PROPS_CONDAENV <value>: Your v-env, should installed coverage"
+	echo "Notice: all of Props arguments is optional, if your system-environment is normal, you can just don't put them, system will auto-fill them."
+	echo "Flags:"
+	echo "++ -V: Enable verbose outputs"
+	echo "++ -H: Show this help page"
+	echo "Defines:"
+	echo "++ -F <value>: Save TEST.makefile to which directory (default: current directory)"
+	echo "Actions:"
+	echo "++ (no action argument): Configure and generate TEST.makefile"
+	echo "++ --INI: See current configs in generated TEST.makefile"
+	
+	# Easter eggs not in this edition, easter eggs in Configure not configure (this edition)
+	
+	echo "Notice: this script is a duplication of Configure, but removed easter eggs and replaced funny texts to tech texts"
+	
+	exit 0
+fi
+
+# Config Viewer
+if [[ " $* " =~ " --INI " ]]; then
+	if [ -f $MF_PATH/TEST.makefile ]; then
+		# Get and echo configs
+		_FILE=$MF_PATH/TEST.makefile
+		_CONDA_DEFAULT_HOME=$(cat $_FILE | head -4 | tail -1 | sed -e 's/CONDA_HOME?=//')
+		_CONDA_ENV=$(cat $_FILE | head -10 | tail -1 | sed -e 's/ENV_NAME=//')
+		_PROJ_HOME=$(cat $_FILE | head -17 | tail -1 | sed -e 's/ROOT=//')
+		_TESTS_HOME=$_PROJ_HOME/maintenance/tests
+		cat << EOINI
+Conda Default Home: $_CONDA_DEFAULT_HOME
+Conda Environment: $_CONDA_ENV
+Project Root Directory: $_PROJ_HOME
+Tests Root Directory: $_TESTS_HOME	
+EOINI
+		exit 0
+	else
+		echo Fatal Error: The TEST.makefile not exists
+		exit 1
+	fi
+fi
+
+# Searching conda
+echo Searching conda....
+
+_CONDA_USER=$(echo " $* " | grep -oP '(?<= --PROPS_CONDA )\S+')
+_CONDA_WHICH=$(which conda)
+IFS=';' read -ra _CONDA_GUESS <<< "~/anaconda3;~/anaconda3/anaconda3;/usr/local/anaconda3;/usr/anaconda3;/usr/anaconda3/anaconda3;/run/anaconda3;/opt/anaconda3;~/miniconda3;~/miniconda3/miniconda3;/usr/local/miniconda3;/usr/miniconda3;/usr/miniconda3/miniconda3;/run/miniconda3;/opt/miniconda3"
+
+CONDA_PATH=null
+
+[[ $VERBOSE -eq 1 ]] && echo Searching by user settings
+if [ -z "$_CONDA_USER" ]; then
+	[[ $VERBOSE -eq 1 ]] && echo Searching by which
+	if [ -z "$_CONDA_WHICH" ]; then
+		# Guessing common install paths
+		[[ $VERBOSE -eq 1 ]] && echo Searching by guess
+		_DONE=0
+		for path in "${_CONDA_GUESS[@]}"; do
+			[[ $VERBOSE -eq 1 ]] && echo Searching in $path
+			if [ -d $path ]; then
+				if [ -f "$path/bin/conda" ]; then
+					CONDA_PATH=$path
+					_DONE=1
+					[[ $VERBOSE -eq 1 ]] && echo Found conda in $path
+					[[ $VERBOSE -eq 1 ]] && echo Searched by guess
+					break
+				else
+					continue
+				fi
+			else
+				continue
+			fi
+		done
+		if [ $_DONE -eq 0 ]; then
+			echo Fatal Error: I cannot search the conda
+			exit 1
+		fi
+	else
+		[[ $VERBOSE -eq 1 ]] && echo Searched by which
+		CONDA_PATH=$(dirname $(dirname $_CONDA_WHICH))
+	fi
+else
+	if [ -d "$_CONDA_USER" ]; then
+		if [ -f "$_CONDA_USER/bin/conda" ]; then
+			[[ $VERBOSE -eq 1 ]] && echo Searched by user settings
+			CONDA_PATH=$_CONDA_USER
+		else
+			echo Fatal Error: The conda binary is not exists
+			exit 1
+		fi
+	else
+		echo Fatal Error: The conda path is not exists
+		exit 1
+	fi
+fi
+
+if [ -r "$CONDA_PATH/bin/conda" ]; then
+	$CONDA_PATH/bin/conda --version > /dev/zero 2>&1
+	_HAS_PERM=$( [ $? -eq 0 ] && echo 'true' || echo 'false' )
+	if $_HAS_PERM; then
+		[[ $VERBOSE -eq 1 ]] && echo It has R and X permission
+	else
+		echo Fatal Error: Permission denied \(Has R but missed X\)
+		exit 1
+	fi
+else
+	echo Fatal Error: Permission denied \(Both missed R and X\)
+	exit 1
+fi
+
+echo Searched conda.... $CONDA_PATH
+
+# Querying conda version
+echo Querying conda version....
+
+_RAW_VERSION=$(echo "$($CONDA_PATH/bin/conda --version)" | cut -d' ' -f2)
+_MINIFY_VERSION=4.3.1
+
+[[ $VERBOSE -eq 1 ]] && echo Your conda version is $_RAW_VERSION, it should greater than $_MINIFY_VERSION.
+
+_DIFFED_LOWER=$(printf "%s\n" "$_RAW_VERSION" "$_MINIFY_VERSION" | sort -V | tr '\n' ' ' | cut -d' ' -f1)
+
+if [ "$_DIFFED_LOWER" = "$_RAW_VERSION" ]; then
+	# Just need the built-in python supports
+	_PY_RAW_VERSION=$(echo "$($CONDA_PATH/bin/conda --version)" | cut -d' ' -f2)
+	_PY_MINIFY_VERSION=3.6.7
+	[[ $VERBOSE -eq 1 ]] && echo Conda is too old, at least your built-in python \($_PY_RAW_VERSION\) should greater than $_PY_MINIFY_VERSION
+	_PY_DIFFED_LOWER=_DIFFED_LOWER=$(printf "%s\n" "$_PY_RAW_VERSION" "$_PY_MINIFY_VERSION" | sort -V | tr '\n' ' ' | cut -d' ' -f1)
+	if [ "$_PY_DIFFED_LOWER" = "$_PY_RAW_VERSION" ]; then
+		echo Fatal Error: Your conda and your python is both too old
+		exit 1
+	else
+		[[ $VERBOSE -eq 1 ]] && echo Your conda too old, but your python is not too old
+	fi
+else
+	[[ $VERBOSE -eq 1 ]] && echo Version matchs
+fi
+
+CONDA_VERSION=$_RAW_VERSION
+
+echo Queried conda version.... $_RAW_VERSION
+
+ENV_ACTIVATOR=null
+ENV_DEACTIVATOR=null
+
+# Querying env-activator/env-deactivator
+echo Querying env-activator....
+echo Querying env-deactivator....
+
+if [ -f $CONDA_PATH/bin/activate ]; then
+	# Old version conda must use this method to act/deact
+	[[ $VERBOSE -eq 1 ]] && echo Old version detected, using source \+ activate
+	ENV_ACTIVATOR="source $CONDA_PATH/bin/activate"
+	eval "$ENV_ACTIVATOR base"
+	_ENV=$(echo "$CONDA_PROMPT_MODIFIER" | sed -e 's/(//' -e 's/)//' | sed 's/.$//')
+	if [ "$_ENV" != 'base' ]; then
+		[[ $VERBOSE -eq 1 ]] && echo Not working
+		read -p "This env-activator($ENV_ACTIVATOR) is not working, please type another one: " -e user_activator
+		eval "$user_activator base"
+		_ENV=$(echo "$CONDA_PROMPT_MODIFIER" | sed -e 's/(//' -e 's/)//' | sed 's/.$//')
+		if [ "$_ENV" != 'base' ]; then
+			echo Still not working, stop
+			exit 1
+		else
+			[[ $VERBOSE -eq 1 ]] && echo Now worked
+			ENV_ACTIVATOR=$user_activator
+		fi
+	fi
+	if [ -f $CONDA_PATH/bin/deactivate ]; then
+		[[ $VERBOSE -eq 1 ]] && echo Found matched deactivator
+		ENV_DEACTIVATOR="source $CONDA_PATH/bin/deactivate"
+		eval "$ENV_DEACTIVATOR base"
+		_ENV=$(echo "$CONDA_PROMPT_MODIFIER" | sed -e 's/(//' -e 's/)//' | sed 's/.$//')
+		if [ "$_ENV" = 'base' ]; then
+			[[ $VERBOSE -eq 1 ]] && echo Not working
+			read -p "This env-deactivator($ENV_DEACTIVATOR) is not working, please type another one: " -e user_deactivator
+			eval "$user_deactivator base"
+			_ENV=$(echo "$CONDA_PROMPT_MODIFIER" | sed -e 's/(//' -e 's/)//' | sed 's/.$//')
+			if [ "$_ENV" = 'base' ]; then
+				echo Still not working, stop
+				exit 1
+			else
+				[[ $VERBOSE -eq 1 ]] && echo Now worked
+				ENV_DEACTIVATOR=$user_deactivator
+			fi
+		fi
+	else
+		[[ $VERBOSE -eq 1 ]] && echo Matched deactivator not found
+		read -p "This env-deactivator($ENV_DEACTIVATOR) is missing, please type another one: " -e user_deactivator
+		eval "$user_deactivator base"
+		_ENV=$(echo "$CONDA_PROMPT_MODIFIER" | sed -e 's/(//' -e 's/)//' | sed 's/.$//')
+		if [ "$_ENV" = 'base' ]; then
+			echo Still not working, stop
+			exit 1
+		else
+			[[ $VERBOSE -eq 1 ]] && echo Now worked
+			ENV_DEACTIVATOR=$user_deactivator
+		fi
+	fi
+else
+	# New version can use more easy command to do it
+	[[ $VERBOSE -eq 1 ]] && Your conda version is new, can use the more easy command
+	ENV_ACTIVATOR="$CONDA_PATH/bin/conda activate"
+	eval "$ENV_ACTIVATOR base"
+	_ENV=$(echo "$CONDA_PROMPT_MODIFIER" | sed -e 's/(//' -e 's/)//' | sed 's/.$//')
+	if [ $_ENV != 'base' ]; then
+		[[ $VERBOSE -eq 1 ]] && echo Not working
+		read -p "This env-activator($ENV_ACTIVATOR) is not working, please type another one: " -e user_activator
+		eval "$user_activator"
+		_ENV=$(echo "$CONDA_PROMPT_MODIFIER" | sed -e 's/(//' -e 's/)//' | sed 's/.$//')
+		if [ $_ENV != 'base' ]; then
+			echo Still not working, stop
+			exit 1
+		else
+			[[ $VERBOSE -eq 1 ]] && echo Now worked
+			ENV_ACTIVATOR=$user_activator
+		fi
+	fi
+	if [ -f $CONDA_PATH/bin/conda ]; then
+		[[ $VERBOSE -eq 1 ]] && echo Found matched deactivator
+		ENV_DEACTIVATOR="$CONDA_PATH/bin/conda deactivate"
+		eval "$ENV_DEACTIVATOR base"
+		_ENV=$(echo "$CONDA_PROMPT_MODIFIER" | sed -e 's/(//' -e 's/)//' | sed 's/.$//')
+		if [ $_ENV = 'base' ]; then
+			[[ $VERBOSE -eq 1 ]] && echo Not working
+			read -p "This env-deactivator($ENV_DEACTIVATOR) is not working, please type another one: " -e user_deactivator
+			eval "$user_deactivator base"
+			_ENV=$(echo "$CONDA_PROMPT_MODIFIER" | sed -e 's/(//' -e 's/)//' | sed 's/.$//')
+			if [ $_ENV = 'base' ]; then
+				echo Still not working, stop
+				exit 1
+			else
+				[[ $VERBOSE -eq 1 ]] && echo Now worked
+				ENV_DEACTIVATOR=$user_deactivator
+			fi
+		fi
+	else
+		[[ $VERBOSE -eq 1 ]] && echo Matched deactivator not found
+		read -p "This env-deactivator($ENV_DEACTIVATOR) is missing, please type another one: " -e user_deactivator
+		eval "$user_deactivator base"
+		_ENV=$(echo "$CONDA_PROMPT_MODIFIER" | sed -e 's/(//' -e 's/)//' | sed 's/.$//')
+		if [ $_ENV = 'base' ]; then
+			echo Still not working, stop
+			exit 1
+		else
+			[[ $VERBOSE -eq 1 ]] && echo Now worked
+			ENV_DEACTIVATOR=$user_deactivator
+		fi
+	fi
+fi
+
+echo Queried env-activator.... $ENV_ACTIVATOR
+echo Queried env-deactivator.... $ENV_DEACTIVATOR
+
+# Querying the first v-env with intact dependencies
+echo Querying the first v-env with intact dependencies...
+
+ENV=null
+
+_ENVS_ALL_UNPARSED=$($CONDA_PATH/bin/conda info --envs | cut -d' ' -f1 | sed 's/#//' | tr '\n' ' ' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+_ENV_USER=$(echo " $* " | grep -oP '(?<= --PROPS_CONDAENV )\S+')
+IFS=' ' read -ra _ENVS_ALL_PARSED <<< "$_ENVS_ALL_UNPARSED"
+
+[[ $VERBOSE -eq 1 ]] && echo Querying by user settings
+if [ -z "$_ENV_USER" ]; then
+	[[ $VERBOSE -eq 1 ]] && echo Querying by iterating all possible envs
+	for env in "${_ENVS_ALL_PARSED[@]}"; do
+		# For each everything
+		$CONDA_DEACTIVATOR
+		[[ $VERBOSE -eq 1 ]] && echo Now checking env $env
+		$ENV_ACTIVATOR $env
+		_PKG_INCLUDES=$($CONDA_PATH/bin/conda list | grep coverage | cut -d' ' -f1)
+		if [ -z $_PKG_INCLUDES ]; then
+			[[ $VERBOSE -eq 1 ]] && echo Missed coverage
+			continue
+		else
+			[[ $VERBOSE -eq 1 ]] && echo Found coverage, now checking version
+			_COVERAGE_VERSION=$($CONDA_PATH/bin/conda list | grep coverage | tr -s ' ' | cut -d' '  -f2)
+			_MINIFY_COVERAGE_VERSION=4.5.0
+			_DIFFED_LOWER=$(printf "%s\n" "$_COVERAGE_VERSION" "$_MINIFY_COVERAGE_VERSION" | sort -V | tr '\n' ' ' | cut -d' ' -f1)
+			if [ $_DIFFED_LOWER = $_COVERAGE_VERSION ]; then
+				[[ $VERBOSE -eq 1 ]] && echo Your coverage \($_COVERAGE_VERSION\) is not greater than $_MINIFY_COVERAGE_VERSION, this env is unusable
+				continue
+			else
+				[[ $VERBOSE -eq 1 ]] && echo Your coverage \($_COVERAGE_VERSION\) is greater than $_MINIFY_COVERAGE_VERSION, this env is usable
+				ENV=$env
+				break
+			fi
+		fi
+	done
+else
+	$ENV_ACTIVATOR $_ENV_USER
+	_PKG_INCLUDES=$($CONDA_PATH/bin/conda list | grep coverage | cut -d' ' -f1)
+	if [ -z $_PKG_INCLUDES ]; then
+		echo Fatal Error: No coverage here, please use another env
+		exit 1
+	else
+		[[ $VERBOSE -eq 1 ]] && echo Yep, checking version time!
+		_COVERAGE_VERSION=$($CONDA_PATH/bin/conda list | grep coverage | tr -s ' ' | cut -d' '  -f2)
+		_MINIFY_COVERAGE_VERSION=4.5.0
+		_DIFFED_LOWER=$(printf "%s\n" "$_COVERAGE_VERSION" "$_MINIFY_COVERAGE_VERSION" | sort -V | tr '\n' ' ' | cut -d' ' -f1)
+		if [ $_DIFFED_LOWER = $_COVERAGE_VERSION ]; then
+			echo Fatal Error: Your coverage \($_COVERAGE_VERSION\) is not greater than $_MINIFY_COVERAGE_VERSION, this env is unusable
+			exit 1
+		else
+			[[ $VERBOSE -eq 1 ]] && echo Your coverage \($_COVERAGE_VERSION\) is greater than $_MINIFY_COVERAGE_VERSION, this env is usable
+			ENV=$_ENV_USER
+		fi
+	fi
+fi
+
+if [ "$ENV" = 'null' ]; then
+	echo Fatal Error: Every envs is not match requirement \(use -V see more infos\)
+	exit 1
+fi
+
+echo Queried v-env.... $ENV
+
+# Define view
+view() {
+	echo "Viewing for $(basename "$1")...."
+	[[ $VERBOSE -eq 1 ]] && echo $(basename $1) should at $(dirname $1).
+	if [[ -f $1 ]]; then
+		echo "Viewed for $(basename "$1").... Yes"
+		return 0
+	else
+		echo Fatal Error: File not exist: $1, try git pull
+		exit 1
+	fi
+}
+
+# Viewing project files
+view "$PROJ_HOME/EventEmitter.py"
+view "$PROJ_HOME/EventListener.py"
+view "$PROJ_HOME/Event.py"
+view "$TESTS_HOME/test1.py"
+view "$TESTS_HOME/test2.py"
+view "$TESTS_HOME/test3.py"
+view "$TESTS_HOME/test4.py"
+view "$TESTS_HOME/liblbtest.py"
+
+# Define cleanup_view_import and view_import
+cleanup_view_import() {
+	[[ $VERBOSE -eq 1 ]] && echo Deleting temp file: $__FILE
+	rm $__FILE
+	unset __TEMP
+	unset __FILE
+}
+
+view_import() {
+	echo "Viewing and checking for $(basename "$1")...."
+	__TEMP=$(shuf -i 0-21173057 -n 1 | xargs printf '%x')
+	__FILE=_test_$__TEMP.py
+	if [ $2 = "null" ]; then
+		cat << EOT > $__FILE
+import $1
+EOT
+	else
+		[[ $VERBOSE -eq 1 ]] && echo Calling $2 with argument: $3
+		cat << EOT > $__FILE
+import $1
+TEMP=$2($3)
+EOT
+	fi
+	$ENV_ACTIVATOR $ENV
+	python $__FILE > /dev/zero 2>&1
+	if [ $? -eq 0 ]; then
+		echo "Viewed and checked for $(basename "$1").... Yes"
+	else
+		echo "Viewed and checked for $(basename "$1").... No"
+		echo Warning: Unknown test error, try git pull
+	fi
+	cleanup_view_import
+	$ENV_DEACTIVATOR
+}
+
+# Needed modules pre-test
+view_import "_sqlite3" "null"
+view_import "_pyio" "null"
+view_import "_collections_abc" "null"
+
+# Project files pre-test
+cd $PROJ_HOME
+view_import "EventEmitter" "EventEmitter.EventEmitter" ""
+view_import "EventListener" "EventListener.EventListener" "None,None"
+view_import "Event" "Event.Event" "None,None"
+
+# Test files pre-test
+cd $TESTS_HOME
+cp $PROJ_HOME/Event*.py $TESTS_HOME
+view_import "liblbtest" "null"
+view_import "test1" "null"
+view_import "test2" "null"
+view_import "test3" "null"
+view_import "test4" "null"
+rm $TESTS_HOME/Event*.py
+
+# Define cleanup_arg_test andtest_coverage_arg
+cleanup_arg_test() {
+	[[ $VERBOSE -eq 1 ]] && echo Deleting temp file: $__FILE
+	rm $__FILE
+	unset __TEMP
+	unset __FILE
+}
+
+test_coverage_arg() {
+	echo "Viewing for coverage with $1...."
+	__TEMP=$(shuf -i 0-21173057 -n 1 | xargs printf '%x')
+	__FILE=_test_$__TEMP.py
+	cat << EOT > $__FILE
+print("Hello World")
+a=1+1
+EOT
+	$ENV_ACTIVATOR $ENV
+	[[ $VERBOSE -eq 1 ]] && echo Testing coverage argument: $2
+	coverage erase
+	coverage run $2 $__FILE > /dev/zero
+	if [ $? -eq 0 ]; then
+		echo "Viewed for coverage with $1.... Yes"
+	else
+		echo Fatal Error: Too old/Too new coverage
+		$CONDA_DEACTIVATOR
+		cleanup_arg_test
+		exit 1
+	fi
+	$ENV_DEACTIVATOR
+	cleanup_arg_test
+}
+
+# Check for needed args
+test_coverage_arg "omit" "--omit=*"
+test_coverage_arg "append" "--append"
+
+# Writing out TEST.makefile
+echo Writing out TEST.makefile to $MF_PATH....
+
+echo \#\!/usr/bin/make > $MF_PATH/TEST.makefile
+
+cat << EOMF > $MF_PATH/TEST.makefile
+
+# cd ../..
+
+CONDA_HOME?=$CONDA_PATH
+
+DONT_UPDATE?=0
+
+CONDA_BIN=\$(CONDA_HOME)/bin
+CONDA=\$(CONDA_BIN)/conda
+ENV_NAME=$ENV
+CONDA_DO_ACT=$ENV_ACTIVATOR \$(ENV_NAME)
+CONDA_DO_DEACT=$ENV_DEACTIVATOR
+CONDA_INSTALL_PKG=\$(CONDA) install
+COVERAGE_SETUP=coverage erase
+COVERAGE_REPORT=coverage report
+COVERAGE_HTMLREPORT=coverage html
+ROOT=$PROJ_HOME
+OMIT_FILE=$TESTS_HOME/liblbtest.py
+COVERAGE_EXEC_FLAGS=--omit='\$(OMIT_FILE)' --append
+COVERAGE_EXEC=coverage run \$(COVERAGE_EXEC_FLAGS)
+TEST_FILE_TEMPLATE=$TESTS_HOME/test
+TEST_FILE1=\$(TEST_FILE_TEMPLATE)1.py
+TEST_FILE2=\$(TEST_FILE_TEMPLATE)2.py
+TEST_FILE3=\$(TEST_FILE_TEMPLATE)3.py
+TEST_FILE4=\$(TEST_FILE_TEMPLATE)4.py
+CREATE_FLAG=echo 0 > .lesboys.maintenance
+COPY=cp
+DELETE=rm
+SHELL=/bin/bash
+
+.PHONY: all configEnv actEnv installCoverage setupEnv reporting endTest test deactEnv clean
+
+all: test clean
+
+$TESTS_HOME/EventEmitter.py:
+	\$(COPY) \$(ROOT)/EventEmitter.py $TESTS_HOME/EventEmitter.py
+
+$TESTS_HOME/EventListener.py:
+	\$(COPY) \$(ROOT)/EventListener.py $TESTS_HOME/EventListener.py
+
+$TESTS_HOME/Event.py:
+	\$(COPY) \$(ROOT)/Event.py $TESTS_HOME/Event.py
+
+configEnv: $TESTS_HOME/EventEmitter.py $TESTS_HOME/EventListener.py $TESTS_HOME/Event.py
+	\$(DELETE) .coverage* || true
+
+actEnv: configEnv
+	\$(CONDA_DO_ACT)
+
+installCoverage: actEnv
+	if [ "\$(DONT_UPDATE)" -eq 0 ]; then \
+		\$(CONDA_INSTALL_PKG) coverage; \
+	fi
+
+setupEnv: configEnv actEnv installCoverage
+	\$(COVERAGE_SETUP)
+
+.lesboys.maintenance1: setupEnv
+	\$(COVERAGE_EXEC) \$(TEST_FILE1)
+	\$(CREATE_FLAG)1
+
+.lesboys.maintenance2: setupEnv
+	\$(COVERAGE_EXEC) \$(TEST_FILE2)
+	\$(CREATE_FLAG)2
+
+.lesboys.maintenance3: setupEnv
+	\$(COVERAGE_EXEC) \$(TEST_FILE3)
+	\$(CREATE_FLAG)3
+
+.lesboys.maintenance4: setupEnv
+	\$(COVERAGE_EXEC) \$(TEST_FILE4)
+	\$(CREATE_FLAG)4
+
+.coverage.ok: .lesboys.maintenance1 .lesboys.maintenance2 .lesboys.maintenance3 .lesboys.maintenance4
+	\$(COPY) .coverage .coverage.ok
+
+.coverage.end: .coverage.ok endTest
+	\$(COPY) .coverage.ok .coverage.end
+
+reporting: .coverage.ok
+	\$(COVERAGE_REPORT)
+	\$(COVERAGE_HTMLREPORT)
+
+endTest: reporting
+	\$(DELETE) .coverage
+
+test: endTest
+
+deactEnv: actEnv .coverage.end
+	\$(CONDA_DEACT)
+
+clean: .coverage.end deactEnv
+	\$(DELETE) .coverage.ok .coverage.end
+	\$(DELETE) $TESTS_HOME/EventEmitter.py $TESTS_HOME/EventListener.py $TESTS_HOME/Event.py
+	\$(DELETE) .lesboys.maintenance*
+EOMF
+
+
+echo Wrote out TEST.makefile to $MF_PATH.... End
+
+echo ++++Configure progress end++++ You can use make -f $MF_PATH/TEST.makefile all to run tests
